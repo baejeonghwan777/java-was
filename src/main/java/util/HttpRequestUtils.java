@@ -1,5 +1,11 @@
 package util;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -8,9 +14,10 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 
 public class HttpRequestUtils {
+    public static final int MAX_INDEX = 2;
+    public static final int URL_INDEX = 1;
     /**
-     * @param queryString은
-     *            URL에서 ? 이후에 전달되는 field1=value1&field2=value2 형식임
+     * @param // queryString은 URL에서 ? 이후에 전달되는 field1=value1&field2=value2 형식임
      * @return
      */
     public static Map<String, String> parseQueryString(String queryString) {
@@ -18,12 +25,27 @@ public class HttpRequestUtils {
     }
 
     /**
-     * @param 쿠키
-     *            값은 name1=value1; name2=value2 형식임
+     * @param // 쿠키값은 name1=value1; name2=value2 형식임
      * @return
      */
     public static Map<String, String> parseCookies(String cookies) {
         return parseValues(cookies, ";");
+    }
+
+    public static String extractPath(String line) {
+        String[] tokens = line.split(" ");
+        if(tokens.length >= MAX_INDEX) return tokens[URL_INDEX];
+        return null;
+    }
+
+    public static byte[] readPath(String path, String url) throws IOException {
+        try {
+            return Files.readAllBytes(new File(path + url).toPath());
+        } catch (NoSuchFileException e) {
+            throw new NoSuchFileException("요청하신 파일을 찾을 수 없습니다: " + path);
+        } catch (IOException e) {
+            throw new IOException("파일 불러오는 중 오류가 발생했습니다:" + path);
+        }
     }
 
     private static Map<String, String> parseValues(String values, String separator) {

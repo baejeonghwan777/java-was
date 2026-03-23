@@ -9,3 +9,16 @@
 ## 온라인 코드 리뷰 과정
 * [텍스트와 이미지로 살펴보는 코드스쿼드의 온라인 코드 리뷰 과정](https://github.com/code-squad/codesquad-docs/blob/master/codereview/README.md)
 * [동영상으로 살펴보는 코드스쿼드의 온라인 코드 리뷰 과정](https://youtu.be/a5c9ku-_fok)
+
+## 새롭게 알게 된 내용
+* 홈페이지를 띄우면 request 알림이 온다는 사실을 알 수 있었다.
+* header 내용에 해당하는 GET /index.html HTTP/1.1은 정해진 HTTP 규격에 따라 html 파일을 전해달라는 뜻임을 알 수 있었다.
+
+## 구현 중 학습하게 된 내용 또는 용어 정리
+* inputStream은 네트워크로부터 얻어온 byte단위 숫자이다.
+* inputStreamReader가 이것을 읽고 문자열로 번역하는 작업을 수행한다.
+* BufferedReader가 문자열을 하나씩 꺼내서 읽을 수 있도록 번역한 문자열을 모아놓는 작업을 수행한다.
+* log.debug를 통해 읽어낸 stream을 한줄씩 출력한다. 이때 header에는 필요한 파일을 가져다달라는 문구가 출력된다.
+* 필요한 파일을 가져다주기 위해 토큰을 공백 단위로 분리해내는 작업을 수행한다.
+* 그 후 Files.readAllBytes를 이용하여 .webapp에 있는 파일으로부터 byte를 읽어와 저장한다. 이때 url은 이미 읽어온 요구하는 파일을 바탕으로 반영한다.
+* 이후 실제 바이트 파일을 화면에 출력한다.

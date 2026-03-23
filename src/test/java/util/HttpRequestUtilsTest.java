@@ -7,7 +7,9 @@ import java.util.Map;
 
 import org.junit.Test;
 
+import org.junit.jupiter.api.DisplayName;
 import util.HttpRequestUtils.Pair;
+import webserver.RequestHandler;
 
 public class HttpRequestUtilsTest {
     @Test
@@ -69,5 +71,16 @@ public class HttpRequestUtilsTest {
         String header = "Content-Length: 59";
         Pair pair = HttpRequestUtils.parseHeader(header);
         assertThat(pair, is(new Pair("Content-Length", "59")));
+    }
+
+    @DisplayName("Header에서 html 파일이 잘 추출되는지 확인한다.")
+    @Test
+    public void parsePath() {
+        String expected = "/index.html";
+
+        String header = "GET /index.html HTTP/1.1";
+        String result = HttpRequestUtils.extractPath(header);
+
+        assertEquals(expected, result);
     }
 }
