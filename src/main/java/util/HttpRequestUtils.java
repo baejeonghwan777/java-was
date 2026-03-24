@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Map;
@@ -34,7 +33,10 @@ public class HttpRequestUtils {
 
     public static String extractPath(String line) {
         String[] tokens = line.split(" ");
-        if(tokens.length >= MAX_INDEX) return tokens[URL_INDEX];
+        if(tokens.length >= MAX_INDEX) {
+            String url = tokens[URL_INDEX];
+            return Paths.get(url).normalize().toString().replace("\\", "/");
+        }
         return null;
     }
 
@@ -42,9 +44,9 @@ public class HttpRequestUtils {
         try {
             return Files.readAllBytes(new File(path + url).toPath());
         } catch (NoSuchFileException e) {
-            throw new NoSuchFileException("요청하신 파일을 찾을 수 없습니다: " + path);
+            return "File Not Found".getBytes();
         } catch (IOException e) {
-            throw new IOException("파일 불러오는 중 오류가 발생했습니다:" + path);
+            return "Error occurred".getBytes();
         }
     }
 

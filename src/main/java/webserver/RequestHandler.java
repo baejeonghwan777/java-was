@@ -42,7 +42,7 @@ public class RequestHandler extends Thread {
             byte[] body = HttpRequestUtils.readPath("./webapp",url);
             response200Header(dos, body.length);
             responseBody(dos, body);
-        } catch (IOException e) {
+        } catch (IOException | NullPointerException e) {
             log.error(e.getMessage());
         }
     }

@@ -9,7 +9,6 @@ import org.junit.Test;
 
 import org.junit.jupiter.api.DisplayName;
 import util.HttpRequestUtils.Pair;
-import webserver.RequestHandler;
 
 public class HttpRequestUtilsTest {
     @Test
