@@ -34,8 +34,7 @@ public class HttpRequestUtils {
     public static String extractPath(String line) {
         String[] tokens = line.split(" ");
         if(tokens.length >= MAX_INDEX) {
-            String url = tokens[URL_INDEX];
-            return Paths.get(url).normalize().toString().replace("\\", "/");
+            return tokens[URL_INDEX];
         }
         return null;
     }
