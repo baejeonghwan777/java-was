@@ -22,9 +22,6 @@ import util.IOUtils;
 import static util.HttpRequestUtils.parseQueryString;
 
 public class RequestHandler extends Thread {
-    private static final int PATH_INDEX = 0;
-    private static final int USER_INDEX = 1;
-
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
 
     private Socket connection;
