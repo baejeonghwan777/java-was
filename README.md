@@ -32,3 +32,11 @@
 * Paths.normalized()에 ?가 들어가면 오류를 뿜으며 강제 종료된다.
 * 따라서 extractPath에서 정규화를 하는 것이 아닌 ?가 있는지 없는지 판단한 후 ?가 있는 부분을 제거하고 정규화를 진행해야 한다.
 * URLDecoder.decode(value, "UTF-8")를 통해 메시지가 한글이나 특수문자가 와도 해독할 수 있다.
+
+## 3단계 구현 중 학습하게 된 내용 또는 용어 정리
+* HTTP의 POST 메소드는 GET 메소드와 다르게 링크로 중요한 정보가 노출되는 것이 아닌 response 이후에 따로 정보가 저장된다는 사실을 알 수 있었다.
+* Content-Length에 HTTP body의 크기가 저장되는데 Content-Length으로 문자열이 시작할 경우 해당 정보를 extractLength 메소드를 통해 받아온다.
+* Header의 내용을 readLine()이 읽어오는데 HTTP body는 Header 내용 이후 한줄 띄고 시작하기에 Header 내용을 모두 불러오면 line.isEmpty()에 걸려 Header를 읽는 로직이 끝난다.
+* 이후 readData()를 통해 body 내용을 읽어온다.
+* /user/create일 경우에만 회원가입을 후 리다이렉션을 진행하므로 리다이렉션 전용 응답인 302번을, 그렇지 않으면 200번을 응답으로 보낸다.
+* Location: /index.html으로 redirection 위치를 지정하여 자동으로 이동하게 구현한다.

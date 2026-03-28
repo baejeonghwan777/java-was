@@ -10,7 +10,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.util.Map;
 
 import db.DataBase;
@@ -18,6 +17,7 @@ import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import util.HttpRequestUtils;
+import util.IOUtils;
 
 import static util.HttpRequestUtils.parseQueryString;
 
@@ -43,25 +43,25 @@ public class RequestHandler extends Thread {
             BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
             String line = br.readLine();
             log.debug("request line : {}", line);
-            String url = HttpRequestUtils.extractPath(line);
-
-            // /user/create 일때만 ?가 들어있는지 확인하기
-            if (url.startsWith("/user/create?")) {
-                String[] information = url.split("\\?");
-                String path = information[PATH_INDEX];
-                String data = information[USER_INDEX];
-                makeUser(data);
-                url = path;
-            }
+            String url = HttpRequestUtils.extractPath(line); // url을 특정 조건에서만 빼옴 반복문 안에서 하나씩 하다가
+            int length = 0;
 
             // 클라이언트 데이터를 line by line으로 읽음 로그를 사용하면 쓰레드 출처도 확인 가능
             while(!line.isEmpty()) {
                 line = br.readLine();
+                if(line.startsWith("Content-Length")) length = HttpRequestUtils.extractLength(line);
                 log.debug("header line : {}", line);
             }
+
+            // body
+            String data = IOUtils.readData(br, length);
+            if(!data.isEmpty()) makeUser(data);
+
             DataOutputStream dos = new DataOutputStream(out);
             byte[] body = HttpRequestUtils.readPath("./webapp", url);
-            response200Header(dos, body.length);
+            if(url.startsWith("/user/create")) response302Header(dos, body.length);
+            if(!url.startsWith("/user/create")) response200Header(dos, body.length);
+
             responseBody(dos, body);
         } catch (IOException e) {
             log.error(e.getMessage());
@@ -79,6 +79,17 @@ public class RequestHandler extends Thread {
         User user = new User(userId, password, name, email);
 
         DataBase.addUser(user);
+    }
+
+    private void response302Header(DataOutputStream dos, int lengthOfBodyContent) {
+        try {
+            dos.writeBytes("HTTP/1.1 302 Found \r\n");
+            dos.writeBytes("Location: /index.html\r\n");
+            dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
+            dos.writeBytes("\r\n");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
     }
 
     private void response200Header(DataOutputStream dos, int lengthOfBodyContent) {

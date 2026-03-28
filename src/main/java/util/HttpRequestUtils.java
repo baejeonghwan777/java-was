@@ -12,8 +12,9 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 
 public class HttpRequestUtils {
-    public static final int MAX_INDEX = 2;
-    public static final int URL_INDEX = 1;
+    public static final int MAX_PATH_INDEX = 2;
+    public static final int URL_PATH_INDEX = 1;
+    public static final int MAX_LENGTH_INDEX = 1;
     /**
      * @param // queryString은 URL에서 ? 이후에 전달되는 field1=value1&field2=value2 형식임
      * @return
@@ -32,10 +33,18 @@ public class HttpRequestUtils {
 
     public static String extractPath(String line) {
         String[] tokens = line.split(" ");
-        if (tokens.length < MAX_INDEX) {
+        if (tokens.length < MAX_PATH_INDEX) {
             throw new IllegalArgumentException("Invalid Request Line: " + line);
         }
-        return tokens[URL_INDEX];
+        return tokens[URL_PATH_INDEX];
+    }
+
+    public static int extractLength(String line) {
+        String[] tokens = line.split(":");
+        if (tokens.length < MAX_LENGTH_INDEX) {
+            throw new IllegalArgumentException("Invalid Request Line: " + line);
+        }
+        return Integer.parseInt(tokens[MAX_LENGTH_INDEX].trim());
     }
 
     public static byte[] readPath(String path, String url) throws IOException {
