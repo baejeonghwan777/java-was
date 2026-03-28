@@ -45,10 +45,14 @@ public class RequestHandler extends Thread {
             log.debug("request line : {}", line);
             String url = HttpRequestUtils.extractPath(line);
 
-            // ?를 통해 아이디와 비밀번호를 받아오는지 확인하기
-            String path = url;
-            if(url.contains("?")) path = saveUser(url);
-            url = Paths.get(path).normalize().toString().replace("\\", "/");
+            // /user/create 일때만 ?가 들어있는지 확인하기
+            if (url.startsWith("/user/create?")) {
+                String[] information = url.split("\\?");
+                String path = information[PATH_INDEX];
+                String data = information[USER_INDEX];
+                makeUser(data);
+                url = path;
+            }
 
             // 클라이언트 데이터를 line by line으로 읽음 로그를 사용하면 쓰레드 출처도 확인 가능
             while(!line.isEmpty()) {
@@ -59,26 +63,21 @@ public class RequestHandler extends Thread {
             byte[] body = HttpRequestUtils.readPath("./webapp", url);
             response200Header(dos, body.length);
             responseBody(dos, body);
-        } catch (IOException | NullPointerException e) {
+        } catch (IOException e) {
             log.error(e.getMessage());
         }
     }
 
-    private String saveUser(String url) throws UnsupportedEncodingException{
-        String[] information = url.split("\\?");
-        String path = information[PATH_INDEX];
-        String data = information[USER_INDEX];
-        makeUser(data);
-        return path;
-    }
-
     private void makeUser(String data) throws UnsupportedEncodingException {
         Map<String, String> userInstance = parseQueryString(data);
-        for (Map.Entry<String, String> entry : userInstance.entrySet()) {
-            userInstance.put(entry.getKey(), URLDecoder.decode(entry.getValue(), "UTF-8"));
-        }
-        User user = new User(userInstance.get("userId"), userInstance.get("password"),
-                userInstance.get("name"), userInstance.get("email"));
+
+        String userId = URLDecoder.decode(userInstance.get("userId"), "UTF-8");
+        String password = URLDecoder.decode(userInstance.get("password"), "UTF-8");
+        String name = URLDecoder.decode(userInstance.get("name"), "UTF-8");
+        String email = URLDecoder.decode(userInstance.get("email"), "UTF-8");
+
+        User user = new User(userId, password, name, email);
+
         DataBase.addUser(user);
     }
 

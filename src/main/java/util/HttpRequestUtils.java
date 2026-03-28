@@ -32,10 +32,10 @@ public class HttpRequestUtils {
 
     public static String extractPath(String line) {
         String[] tokens = line.split(" ");
-        if(tokens.length >= MAX_INDEX) {
-            return tokens[URL_INDEX];
+        if (tokens.length < MAX_INDEX) {
+            throw new IllegalArgumentException("Invalid Request Line: " + line);
         }
-        return null;
+        return tokens[URL_INDEX];
     }
 
     public static byte[] readPath(String path, String url) throws IOException {
