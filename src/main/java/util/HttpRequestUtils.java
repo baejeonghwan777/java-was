@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -38,7 +39,7 @@ public class HttpRequestUtils {
         if (tokens.length < MAX_PATH_INDEX) {
             throw new IllegalArgumentException("Invalid Request Line: " + line);
         }
-        return tokens[URL_PATH_INDEX];
+        return Paths.get(tokens[URL_PATH_INDEX]).normalize().toString().replace("\\", "/");
     }
 
     public static int extractLength(String line) {
