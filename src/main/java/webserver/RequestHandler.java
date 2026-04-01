@@ -10,7 +10,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import db.DataBase;
 import model.User;
@@ -22,6 +24,11 @@ import util.IOUtils;
 import static util.HttpRequestUtils.parseQueryString;
 
 public class RequestHandler extends Thread {
+    private static final int UNDEFINED = 0;
+    private static final int LOGIN_SUCCESS = 1;
+    private static final int LOGIN_FAIL = 2;
+    private static final int COOKIE_VALUE_INDEX = 1;
+    private final Map<String, String> headers = new HashMap<>();
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
 
     private Socket connection;
@@ -38,12 +45,15 @@ public class RequestHandler extends Thread {
             // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
 
             BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+            User loginUser;
             String line = br.readLine();
             if (line == null) return;
             String firstLine = line;
             log.debug("request line : {}", line);
 
             String url = HttpRequestUtils.extractPath(line); // url을 특정 조건에서만 빼옴 반복문 안에서 하나씩 하다가
+            int loginBeforeFlag = UNDEFINED;
+            int loginAfterFlag = UNDEFINED;
             int length = 0;
 
             // 클라이언트 데이터를 line by line으로 읽음 로그를 사용하면 쓰레드 출처도 확인 가능
@@ -53,7 +63,12 @@ public class RequestHandler extends Thread {
                     break;
                 }
                 if(line.startsWith("Content-Length")) length = HttpRequestUtils.extractLength(line);
-                log.debug("header line : {}", line);
+                if(line.startsWith("Cookie")) {
+                    String[] cookieInfo = line.split(":");
+                    loginUser = DataBase.findUserByCookieId(cookieInfo[COOKIE_VALUE_INDEX].trim());
+                    loginAfterFlag = LOGIN_SUCCESS;
+                }
+                log.debug("request line : {}", line);
             }
 
             DataOutputStream dos = new DataOutputStream(out);
@@ -61,20 +76,40 @@ public class RequestHandler extends Thread {
 
             if (firstLine.startsWith("POST")) {
                 String bodyData = IOUtils.readData(br, length);
-                log.debug("POST body : {}", bodyData);
+                log.debug("POST body : {}", line);
                 if(url.startsWith("/user/create")) makeUser(bodyData);
-                response302Header(dos, "/index.html", 0); // 302 리다이렉트 시 body 불필요
+                if(url.startsWith("/user/login")) loginBeforeFlag = checkUser(bodyData);
+                if(loginBeforeFlag == LOGIN_FAIL) {
+                    response302Header(dos, "/user/login_failed.html", 0); // 302 리다이렉트 시 body 불필요
+                    return;
+                }
+                response302Header(dos, "/index.html", 0);
                 return;
             }
             if (firstLine.startsWith("GET")) {
                 body = HttpRequestUtils.readPath("./webapp", url);
-                response200Header(dos, body.length);
+                response200Header(dos, body.length, "text/html;charset=utf-8");
                 responseBody(dos, body);
-                return;
             }
+
         } catch (IOException e) {
             log.error(e.getMessage());
         }
+    }
+
+    private int checkUser(String data) throws UnsupportedEncodingException {
+        Map<String, String> userInstance = parseQueryString(data);
+
+        String userId = URLDecoder.decode(userInstance.get("userId"), "UTF-8");
+        String password = URLDecoder.decode(userInstance.get("password"), "UTF-8");
+
+        User user = DataBase.findUserById(userId);
+        if(user == null) return LOGIN_FAIL;
+        if(!user.getPassword().equals(password)) return LOGIN_FAIL;
+        String id = UUID.randomUUID().toString();
+        DataBase.addCookie(id, user);
+        addHeader("Set-Cookie",id + "; Path=/;");
+        return LOGIN_SUCCESS;
     }
 
     private void makeUser(String data) throws UnsupportedEncodingException {
@@ -92,10 +127,16 @@ public class RequestHandler extends Thread {
         }
     }
 
+    // 공통 헤더 추가
+    public void addHeader(String key, String value) {
+        headers.put(key, value);
+    }
+
     private void response302Header(DataOutputStream dos, String redirectPath, int lengthOfBodyContent) {
         try {
             dos.writeBytes("HTTP/1.1 302 Found \r\n");
             dos.writeBytes("Location: " + redirectPath + "\r\n");
+            processHeaders(dos);
             dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
             dos.writeBytes("\r\n");
         } catch (IOException e) {
@@ -103,10 +144,10 @@ public class RequestHandler extends Thread {
         }
     }
 
-    private void response200Header(DataOutputStream dos, int lengthOfBodyContent) {
+    private void response200Header(DataOutputStream dos, int lengthOfBodyContent, String contentType) {
         try {
             dos.writeBytes("HTTP/1.1 200 OK \r\n");
-            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
+            dos.writeBytes("Content-Type: " + contentType + "\r\n");
             dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
             dos.writeBytes("\r\n");
         } catch (IOException e) {
@@ -120,6 +161,12 @@ public class RequestHandler extends Thread {
             dos.flush();
         } catch (IOException e) {
             log.error(e.getMessage());
+        }
+    }
+
+    private void processHeaders(DataOutputStream dos) throws IOException {
+        for (String key : headers.keySet()) {
+            dos.writeBytes(key + ": " + headers.get(key) + "\r\n");
         }
     }
 }
