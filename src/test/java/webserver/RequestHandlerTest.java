@@ -1,6 +1,7 @@
 package webserver;
 
 import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -9,6 +10,7 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 import db.DataBase;
 import model.User;
@@ -93,48 +95,116 @@ public class RequestHandlerTest {
         assertAll(
                 () -> assertTrue(response.startsWith("HTTP/1.1 200 OK")),
                 () -> assertTrue(response.contains("Content-Type: text/html;charset=utf-8"))
-        )
+        );
     }
 
     @DisplayName("존재하지 않는 파일 요청 시 File Not Found 본문을 반환한다")
     @Test
     public void GET_존재하지않는파일() {
-        // todo
+        // given
+        byte[] request = buildGetRequest("/baejeonghwan is happy");
+
+        // when
+        String response = runHandler(request);
+        String result = "File Not Found";
+
+        // then
+        assertTrue(response.contains(result));
     }
 
     @DisplayName("POST /user/create 요청 시 회원가입 후 302 리다이렉트한다")
     @Test
     public void POST_회원가입_성공_302리다이렉트() {
-        // todo
+        // given
+        byte[] request = buildPostRequest("/user/create", "userId=baejeonghwan777&password=123456&name=%EB%B0%B0%EC%A0%95%ED%99%98&email=baejeonghwon777%40gmail.com");
+
+        // when
+        String response = runHandler(request);
+
+        // then
+        assertAll(
+                () -> assertTrue(response.startsWith("HTTP/1.1 302 Found"))
+        );
     }
 
     @DisplayName("중복 ID로 회원가입 시 기존 유저가 유지된다")
     @Test
     public void POST_중복회원가입_기존유저유지() {
-        // todo
+        // given
+        byte[] request = buildPostRequest("/user/create", "userId=baejeonghwan777&password=123456&name=%EB%B0%B0%EC%A0%95%ED%99%98&email=baejeonghwon777%40gmail.com");
+        String response = runHandler(request);
+        int expected = DataBase.findAll().size();
+
+        // when
+        byte[] reRequest = buildPostRequest("/user/create", "userId=baejeonghwan777&password=1234567&name=%EB%B0%B0%EC%A0%95%ED%99%98&email=baejeonghwon777%40gmail.com");
+        String reResponse = runHandler(request);
+        int result = DataBase.findAll().size();
+
+        // then
+        assertEquals(expected, result);
     }
 
     @DisplayName("로그인 성공 시 302 리다이렉트와 Set-Cookie를 반환한다")
     @Test
     public void POST_로그인성공_쿠키설정() {
-        // todo
+        // given
+        byte[] requestCreate = buildPostRequest("/user/create", "userId=baejeonghwan777&password=123456&name=%EB%B0%B0%EC%A0%95%ED%99%98&email=baejeonghwon777%40gmail.com");
+        String responseCreate = runHandler(requestCreate);
+
+        // when
+        byte[] request = buildPostRequest("/user/login", "userId=baejeonghwan777&password=123456");
+        String response = runHandler(request);
+
+        // then
+        assertAll(
+                () -> assertTrue(response.startsWith("HTTP/1.1 302 Found")),
+                () -> assertTrue(response.contains("Set-Cookie"))
+        );
     }
 
     @DisplayName("비밀번호 불일치 시 login_failed.html로 리다이렉트한다")
     @Test
     public void POST_로그인실패_비밀번호불일치() {
-        // todo
+        // given
+        byte[] requestCreate = buildPostRequest("/user/create", "userId=baejeonghwan777&password=123456&name=%EB%B0%B0%EC%A0%95%ED%99%98&email=baejeonghwon777%40gmail.com");
+        String responseCreate = runHandler(requestCreate);
+
+        // when
+        byte[] request = buildPostRequest("/user/login", "userId=baejeonghwan777&password=123457");
+        String response = runHandler(request);
+
+        // then
+        assertAll(
+                () -> assertTrue(response.startsWith("HTTP/1.1 302 Found")),
+                () -> assertTrue(response.contains("login_failed.html"))
+        );
     }
 
     @DisplayName("존재하지 않는 유저로 로그인 시 login_failed.html로 리다이렉트한다")
     @Test
     public void POST_로그인실패_존재하지않는유저() {
-        // todo
+        // given
+        byte[] requestCreate = buildPostRequest("/user/create", "userId=baejeonghwan777&password=123456&name=%EB%B0%B0%EC%A0%95%ED%99%98&email=baejeonghwon777%40gmail.com");
+        String responseCreate = runHandler(requestCreate);
+
+        // when
+        byte[] request = buildPostRequest("/user/login", "userId=jincheon&password=123456");
+        String response = runHandler(request);
+
+        // then
+        assertAll(
+                () -> assertTrue(response.startsWith("HTTP/1.1 302 Found")),
+                () -> assertTrue(response.contains("login_failed.html"))
+        );
     }
 
     @DisplayName("빈 요청(null) 시 에러 없이 종료한다")
     @Test
     public void null요청_에러없이종료() {
-        // todo
+        // given
+        byte[] request = buildGetRequest(null);
+
+        // when
+        String response = runHandler(request);
     }
 }

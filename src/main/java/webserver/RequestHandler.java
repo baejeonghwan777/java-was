@@ -27,8 +27,7 @@ public class RequestHandler extends Thread {
     private static final int UNDEFINED = 0;
     private static final int LOGIN_SUCCESS = 1;
     private static final int LOGIN_FAIL = 2;
-    private static final int COOKIE_VALUE_INDEX = 1;
-    private final Map<String, String> headers = new HashMap<>();
+    private static final int COOKIE_VALUE_INDEX = 2;
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
 
     private Socket connection;
@@ -40,6 +39,7 @@ public class RequestHandler extends Thread {
     public void run() {
         log.debug("New Client Connect! Connected IP : {}, Port : {}", connection.getInetAddress(),
                 connection.getPort());
+        final Map<String, String> headers = new HashMap<>();
 
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
             // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
@@ -64,7 +64,7 @@ public class RequestHandler extends Thread {
                 }
                 if(line.startsWith("Content-Length")) length = HttpRequestUtils.extractLength(line);
                 if(line.startsWith("Cookie")) {
-                    String[] cookieInfo = line.split(":");
+                    String[] cookieInfo = line.split("[:=]");
                     loginUser = DataBase.findUserByCookieId(cookieInfo[COOKIE_VALUE_INDEX].trim());
                     loginAfterFlag = LOGIN_SUCCESS;
                 }
@@ -76,28 +76,30 @@ public class RequestHandler extends Thread {
 
             if (firstLine.startsWith("POST")) {
                 String bodyData = IOUtils.readData(br, length);
-                log.debug("POST body : {}", line);
-                if(url.startsWith("/user/create")) makeUser(bodyData);
-                if(url.startsWith("/user/login")) loginBeforeFlag = checkUser(bodyData);
-                if(loginBeforeFlag == LOGIN_FAIL) {
-                    response302Header(dos, "/user/login_failed.html", 0); // 302 리다이렉트 시 body 불필요
+                log.debug("POST body : {}", bodyData);
+                if(url.startsWith("/user/create")) {
+                    makeUser(bodyData);
+                    response302Header(dos, "/index.html", 0, headers);
                     return;
                 }
-                response302Header(dos, "/index.html", 0);
-                return;
+                if(url.startsWith("/user/login")) loginBeforeFlag = checkUser(bodyData, headers);
+                if(loginBeforeFlag == LOGIN_FAIL) {
+                    response302Header(dos, "/user/login_failed.html", 0, headers); // 302 리다이렉트 시 body 불필요
+                    return;
+                }
+                response302Header(dos, "/index.html", 0, headers);
             }
             if (firstLine.startsWith("GET")) {
                 body = HttpRequestUtils.readPath("./webapp", url);
                 response200Header(dos, body.length, "text/html;charset=utf-8");
                 responseBody(dos, body);
             }
-
         } catch (IOException e) {
             log.error(e.getMessage());
         }
     }
 
-    private int checkUser(String data) throws UnsupportedEncodingException {
+    private int checkUser(String data, Map<String, String> headers) throws UnsupportedEncodingException {
         Map<String, String> userInstance = parseQueryString(data);
 
         String userId = URLDecoder.decode(userInstance.get("userId"), "UTF-8");
@@ -108,7 +110,7 @@ public class RequestHandler extends Thread {
         if(!user.getPassword().equals(password)) return LOGIN_FAIL;
         String id = UUID.randomUUID().toString();
         DataBase.addCookie(id, user);
-        addHeader("Set-Cookie",id + "; Path=/;");
+        addHeader("Set-Cookie","sessionId=" + id + "; Path=/;", headers);
         return LOGIN_SUCCESS;
     }
 
@@ -128,15 +130,15 @@ public class RequestHandler extends Thread {
     }
 
     // 공통 헤더 추가
-    public void addHeader(String key, String value) {
+    public void addHeader(String key, String value, Map<String, String> headers) {
         headers.put(key, value);
     }
 
-    private void response302Header(DataOutputStream dos, String redirectPath, int lengthOfBodyContent) {
+    private void response302Header(DataOutputStream dos, String redirectPath, int lengthOfBodyContent, Map<String, String> headers) {
         try {
             dos.writeBytes("HTTP/1.1 302 Found \r\n");
             dos.writeBytes("Location: " + redirectPath + "\r\n");
-            processHeaders(dos);
+            processHeaders(dos, headers);
             dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
             dos.writeBytes("\r\n");
         } catch (IOException e) {
@@ -164,7 +166,7 @@ public class RequestHandler extends Thread {
         }
     }
 
-    private void processHeaders(DataOutputStream dos) throws IOException {
+    private void processHeaders(DataOutputStream dos, Map<String, String> headers) throws IOException {
         for (String key : headers.keySet()) {
             dos.writeBytes(key + ": " + headers.get(key) + "\r\n");
         }
