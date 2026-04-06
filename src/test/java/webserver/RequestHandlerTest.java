@@ -103,9 +103,9 @@ public class RequestHandlerTest {
     public void GET_존재하지않는파일() {
         // given
         byte[] request = buildGetRequest("/baejeonghwan is happy");
+        String response = runHandler(request);
 
         // when
-        String response = runHandler(request);
         String result = "File Not Found";
 
         // then
@@ -122,9 +122,7 @@ public class RequestHandlerTest {
         String response = runHandler(request);
 
         // then
-        assertAll(
-                () -> assertTrue(response.startsWith("HTTP/1.1 302 Found"))
-        );
+        assertTrue(response.startsWith("HTTP/1.1 302 Found"));
     }
 
     @DisplayName("중복 ID로 회원가입 시 기존 유저가 유지된다")
@@ -132,15 +130,15 @@ public class RequestHandlerTest {
     public void POST_중복회원가입_기존유저유지() {
         // given
         byte[] request = buildPostRequest("/user/create", "userId=baejeonghwan777&password=123456&name=%EB%B0%B0%EC%A0%95%ED%99%98&email=baejeonghwon777%40gmail.com");
-        String response = runHandler(request);
-        int expected = DataBase.findAll().size();
+        byte[] reRequest = buildPostRequest("/user/create", "userId=baejeonghwan777&password=1234567&name=%EB%B0%B0%EC%A0%95%ED%99%98&email=baejeonghwon777%40gmail.com");
 
         // when
-        byte[] reRequest = buildPostRequest("/user/create", "userId=baejeonghwan777&password=1234567&name=%EB%B0%B0%EC%A0%95%ED%99%98&email=baejeonghwon777%40gmail.com");
+        String response = runHandler(request);
         String reResponse = runHandler(request);
-        int result = DataBase.findAll().size();
 
         // then
+        int expected = DataBase.findAll().size();
+        int result = DataBase.findAll().size();
         assertEquals(expected, result);
     }
 
@@ -149,10 +147,10 @@ public class RequestHandlerTest {
     public void POST_로그인성공_쿠키설정() {
         // given
         byte[] requestCreate = buildPostRequest("/user/create", "userId=baejeonghwan777&password=123456&name=%EB%B0%B0%EC%A0%95%ED%99%98&email=baejeonghwon777%40gmail.com");
-        String responseCreate = runHandler(requestCreate);
+        byte[] request = buildPostRequest("/user/login", "userId=baejeonghwan777&password=123456");
 
         // when
-        byte[] request = buildPostRequest("/user/login", "userId=baejeonghwan777&password=123456");
+        String responseCreate = runHandler(requestCreate);
         String response = runHandler(request);
 
         // then
@@ -167,10 +165,10 @@ public class RequestHandlerTest {
     public void POST_로그인실패_비밀번호불일치() {
         // given
         byte[] requestCreate = buildPostRequest("/user/create", "userId=baejeonghwan777&password=123456&name=%EB%B0%B0%EC%A0%95%ED%99%98&email=baejeonghwon777%40gmail.com");
-        String responseCreate = runHandler(requestCreate);
+        byte[] request = buildPostRequest("/user/login", "userId=baejeonghwan777&password=123457");
 
         // when
-        byte[] request = buildPostRequest("/user/login", "userId=baejeonghwan777&password=123457");
+        String responseCreate = runHandler(requestCreate);
         String response = runHandler(request);
 
         // then
@@ -185,10 +183,10 @@ public class RequestHandlerTest {
     public void POST_로그인실패_존재하지않는유저() {
         // given
         byte[] requestCreate = buildPostRequest("/user/create", "userId=baejeonghwan777&password=123456&name=%EB%B0%B0%EC%A0%95%ED%99%98&email=baejeonghwon777%40gmail.com");
-        String responseCreate = runHandler(requestCreate);
+        byte[] request = buildPostRequest("/user/login", "userId=jincheon&password=123456");
 
         // when
-        byte[] request = buildPostRequest("/user/login", "userId=jincheon&password=123456");
+        String responseCreate = runHandler(requestCreate);
         String response = runHandler(request);
 
         // then
@@ -206,5 +204,11 @@ public class RequestHandlerTest {
 
         // when
         String response = runHandler(request);
+
+        // then
+        assertAll(
+                () -> assertTrue(response.startsWith("HTTP/1.1 200 OK")),
+                () -> assertTrue(response.contains("Content-Type: text/html;charset=utf-8"))
+        );
     }
 }
