@@ -62,6 +62,14 @@ public class RequestHandlerTest {
         return request.getBytes(StandardCharsets.UTF_8);
     }
 
+    private byte[] buildGetRequestWithCookie(String path, String cookie) {
+        String request = "GET " + path + " HTTP/1.1\r\n"
+                + "Host: localhost:8080\r\n"
+                + "Cookie: " + cookie + "\r\n" // 쿠키 헤더 추가
+                + "\r\n";
+        return request.getBytes(StandardCharsets.UTF_8);
+    }
+
     private byte[] buildPostRequest(String path, String body) {
         byte[] bodyBytes = body.getBytes(StandardCharsets.UTF_8);
         String request = "POST " + path + " HTTP/1.1\r\n"
@@ -78,6 +86,14 @@ public class RequestHandlerTest {
         RequestHandler handler = new RequestHandler(socket);
         handler.run();
         return responseCapture.toString();
+    }
+
+    private String extractCookie(String response) {
+        return Arrays.stream(response.split("\r\n"))
+                .filter(line -> line.startsWith("Set-Cookie:"))
+                .map(line -> line.split(":")[1].trim().split(";")[0])
+                .findFirst()
+                .orElse("");
     }
 
     // --- 테스트 구현 ---
@@ -209,6 +225,44 @@ public class RequestHandlerTest {
         assertAll(
                 () -> assertTrue(response.startsWith("HTTP/1.1 200 OK")),
                 () -> assertTrue(response.contains("Content-Type: text/html;charset=utf-8"))
+        );
+    }
+
+    @DisplayName("로그인이 안되어있을 때 리스트 건드리면 리다이렉트 되는지 확인한다.")
+    @Test
+    public void FailLoginRedirect() {
+        // given
+        byte[] requestList = buildGetRequest("/user/list");
+
+        // when
+        String responseList = runHandler(requestList);
+
+        // then
+        assertAll(
+                () -> assertTrue(responseList.startsWith("HTTP/1.1 302 Found")),
+                () -> assertTrue(responseList.contains("/user/login"))
+        );
+    }
+
+    @DisplayName("로그인 성공 후 리스트 출력이 제대로 되는지 확인한다.")
+    @Test
+    public void printList() {
+        // given
+        byte[] requestCreate = buildPostRequest("/user/create", "userId=baejeonghwan777&password=123456&name=%EB%B0%B0%EC%A0%95%ED%99%98&email=baejeonghwon777@gmail.com");
+        byte[] request = buildPostRequest("/user/login", "userId=baejeonghwan777&password=123456");
+
+        // when
+        String responseCreate = runHandler(requestCreate);
+        String response = runHandler(request);
+        String cookie = extractCookie(response);
+
+
+        // then
+        byte[] requestList = buildGetRequestWithCookie("/user/list", cookie);
+        String responseList = runHandler(requestList);
+        assertAll(
+                () -> assertTrue(responseList.startsWith("HTTP/1.1 200 OK")),
+                () -> assertTrue(responseList.contains("User [userId=baejeonghwan777, password=123456, name=배정환, email=baejeonghwon777@gmail.com]"))
         );
     }
 }
