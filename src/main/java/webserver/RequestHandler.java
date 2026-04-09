@@ -10,6 +10,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -90,6 +91,21 @@ public class RequestHandler extends Thread {
                 response302Header(dos, "/index.html", 0, headers);
             }
             if (firstLine.startsWith("GET")) {
+                if(url.startsWith("/user/list")) {
+                    if(loginAfterFlag == UNDEFINED) {
+                        response302Header(dos, "/user/login.html", 0, headers);
+                        return;
+                    }
+                    StringBuilder builder = new StringBuilder();
+                    for (User user : DataBase.findAll()) {
+                        builder.append(user.toString());
+                    }
+                    body = builder.toString().getBytes();
+                    System.out.println(Arrays.toString(body));
+                    response200Header(dos, body.length, "text/html;charset=utf-8");
+                    responseBody(dos, body);
+                    return;
+                }
                 body = HttpRequestUtils.readPath("./webapp", url);
                 response200Header(dos, body.length, "text/html;charset=utf-8");
                 responseBody(dos, body);
