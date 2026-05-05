@@ -101,7 +101,7 @@ public class RequestHandler extends Thread {
                         builder.append(user.toString());
                     }
                     body = builder.toString().getBytes();
-                    System.out.println(Arrays.toString(body));
+                    log.debug(Arrays.toString(body));
                     response200Header(dos, body.length, "text/html;charset=utf-8");
                     responseBody(dos, body);
                     return;
