@@ -67,7 +67,8 @@ public class RequestHandler extends Thread {
                 if(line.startsWith("Cookie")) {
                     String[] cookieInfo = line.split("[:=]");
                     loginUser = DataBase.findUserByCookieId(cookieInfo[COOKIE_VALUE_INDEX].trim());
-                    loginAfterFlag = LOGIN_SUCCESS;
+                    if(loginUser != null)
+                        loginAfterFlag = LOGIN_SUCCESS;
                 }
                 log.debug("request line : {}", line);
             }
@@ -97,12 +98,24 @@ public class RequestHandler extends Thread {
                         return;
                     }
                     StringBuilder builder = new StringBuilder();
+                    builder.append("<html><body>");
+                    builder.append("<h1>사용자 목록</h1>");
+                    builder.append("<table border='1'>");
+                    builder.append("<tr><th>아이디</th><th>이름</th><th>이메일</th></tr>");
+
                     for (User user : DataBase.findAll()) {
-                        builder.append(user.toString());
+                        builder.append("<tr>");
+                        builder.append("<td>").append(user.getUserId()).append("</td>");
+                        builder.append("<td>").append(user.getName()).append("</td>");
+                        builder.append("<td>").append(user.getEmail()).append("</td>");
+                        builder.append("</tr>");
                     }
-                    body = builder.toString().getBytes();
-                    log.debug(Arrays.toString(body));
-                    response200Header(dos, body.length, "text/html;charset=utf-8");
+
+                    builder.append("</table>");
+                    builder.append("</body></html>");
+
+                    body = builder.toString().getBytes("UTF-8");
+                    response200Header(dos, body.length, "text/html;charset=utf-8"); // Content-Type이 text/html이어야 함
                     responseBody(dos, body);
                     return;
                 }
