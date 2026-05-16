@@ -80,6 +80,17 @@ public class RequestHandlerTest {
         return request.getBytes(StandardCharsets.UTF_8);
     }
 
+    private byte[] buildPostRequestWithCookie(String path, String cookie, String body) {
+        byte[] bodyBytes = body.getBytes(StandardCharsets.UTF_8);
+        String request = "POST " + path + " HTTP/1.1\r\n"
+                + "Host: localhost:8080\r\n"
+                + "Cookie: " + cookie + "\r\n" // 쿠키 추가!
+                + "Content-Length: " + bodyBytes.length + "\r\n"
+                + "\r\n"
+                + body;
+        return request.getBytes(StandardCharsets.UTF_8);
+    }
+
     private String runHandler(byte[] request) {
         ByteArrayOutputStream responseCapture = new ByteArrayOutputStream();
         TestSocket socket = new TestSocket(request, responseCapture);
@@ -263,6 +274,84 @@ public class RequestHandlerTest {
         assertAll(
                 () -> assertTrue(responseList.startsWith("HTTP/1.1 200 OK")),
                 () -> assertTrue(responseList.contains("User [userId=baejeonghwan777, password=123456, name=배정환, email=baejeonghwon777@gmail.com]"))
+        );
+    }
+
+    @DisplayName("css 파일이 잘 불러와지는지 확인한다.")
+    @Test
+    public void cssTest() {
+        // given
+        byte[] requestList = buildGetRequest("/css/styles.css");
+
+        // when
+        String responseList = runHandler(requestList);
+
+        // then
+        assertAll(
+                () -> assertTrue(responseList.startsWith("HTTP/1.1 200 OK")),
+                () -> assertTrue(responseList.contains("Content-Type: text/css"))
+        );
+    }
+
+    @DisplayName("이미지 파일이 잘 불러와지는지 확인한다.")
+    @Test
+    public void imageTest() {
+        // given
+        byte[] requestList = buildGetRequest("/80-text.png");
+
+        // when
+        String responseList = runHandler(requestList);
+
+        // then
+        assertAll(
+                () -> assertTrue(responseList.startsWith("HTTP/1.1 200 OK")),
+                () -> assertTrue(responseList.contains("Content-Type: image/png"))
+        );
+    }
+
+    @DisplayName("favicon(페이지 대표 이미지, ico 파일)이 잘 불러와지는지 확인한다.")
+    @Test
+    public void faviconTest() {
+        // given
+        byte[] requestList = buildGetRequest("/favicon.ico");
+
+        // when
+        String responseList = runHandler(requestList);
+
+        // then
+        assertAll(
+                () -> assertTrue(responseList.startsWith("HTTP/1.1 200 OK")),
+                () -> assertTrue(responseList.contains("Content-Type: image/x-icon"))
+        );
+    }
+
+    @DisplayName("서버에 작성한 데이터가 잘 저장되는지 확인한다.")
+    @Test
+    public void postDataTest() {
+        // given
+        byte[] requestCreate = buildPostRequest("/user/create", "userId=baejeonghwan777&password=123456&name=%EB%B0%B0%EC%A0%95%ED%99%98&email=baejeonghwon777@gmail.com");
+        runHandler(requestCreate);
+
+        byte[] requestLogin = buildPostRequest("/user/login", "userId=baejeonghwan777&password=123456");
+        String responseLogin = runHandler(requestLogin);
+
+        String cookie = extractCookie(responseLogin);
+
+        // when
+        String memoBody = "writer=%EB%B0%B0%EC%A0%95%ED%99%98&content=socket_test_success_happy"; // 한국어 디코딩
+        byte[] requestPostMemo = buildPostRequestWithCookie("/memo", cookie, memoBody);
+        String responsePostMemo = runHandler(requestPostMemo);
+
+
+        // Then
+        byte[] requestIndex = buildGetRequestWithCookie("/index.html", cookie);
+        String responseIndex = runHandler(requestIndex);
+
+        assertAll(
+                () -> assertTrue(responsePostMemo.startsWith("HTTP/1.1 302 Found")),
+                () -> assertTrue(responseIndex.startsWith("HTTP/1.1 200 OK")),
+                () -> assertTrue(responseIndex.contains("socket_test_success_happy")),
+                () -> assertFalse(responseIndex.contains("${memoList}"))
         );
     }
 }
