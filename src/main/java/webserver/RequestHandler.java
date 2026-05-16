@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import db.DataBase;
+import model.Memo;
 import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +47,7 @@ public class RequestHandler extends Thread {
             // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
 
             BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-            User loginUser;
+            User loginUser = null;
             String line = br.readLine();
             if (line == null) return;
             String firstLine = line;
@@ -89,9 +90,45 @@ public class RequestHandler extends Thread {
                     response302Header(dos, "/user/login_failed.html", 0, headers); // 302 리다이렉트 시 body 불필요
                     return;
                 }
+                if(url.startsWith("/memo")) {
+                    if(loginAfterFlag == UNDEFINED || loginUser == null) {
+                        response302Header(dos, "/user/login.html", 0, headers);
+                        return;
+                    }
+                    Map<String, String> params = parseQueryString(bodyData);
+
+                    String content = params.get("content");
+
+                    Memo memo = new Memo(loginUser.getName(), content);
+                    DataBase.addMemo(memo);
+
+                    response302Header(dos, "/index.html", 0, headers);
+                    return;
+                }
                 response302Header(dos, "/index.html", 0, headers);
             }
             if (firstLine.startsWith("GET")) {
+                if (url.startsWith("/index.html") || url.equals("/")) {
+                    log.debug("데이터베이스 접근");
+                    byte[] fileBytes = HttpRequestUtils.readPath("./webapp", "/index.html");
+                    String htmlString = new String(fileBytes, StandardCharsets.UTF_8);
+
+                    StringBuilder memoRows = new StringBuilder();
+                    for (Memo m : DataBase.findAllMemos()) {
+                        memoRows.append("<tr>")
+                                .append("<td>").append(m.getDate()).append("</td>")
+                                .append("<td>").append(m.getWriter()).append("</td>")
+                                .append("<td>").append(m.getContent()).append("</td>")
+                                .append("</tr>");
+                    }
+
+                    htmlString = htmlString.replace("${memoList}", memoRows.toString());
+
+                    body = htmlString.getBytes(StandardCharsets.UTF_8);
+                    response200Header(dos, body.length, "text/html;charset=utf-8");
+                    responseBody(dos, body);
+                    return;
+                }
                 if(url.startsWith("/user/list")) {
                     if(loginAfterFlag == UNDEFINED) {
                         response302Header(dos, "/user/login.html", 0, headers);
@@ -116,6 +153,23 @@ public class RequestHandler extends Thread {
 
                     body = builder.toString().getBytes("UTF-8");
                     response200Header(dos, body.length, "text/html;charset=utf-8"); // Content-Type이 text/html이어야 함
+                    responseBody(dos, body);
+                    return;
+                }
+                if (url.contains(".")) {
+                    String contentType = "text/html;charset=utf-8"; // 기본값
+
+                    if (url.endsWith(".css")) {
+                        contentType = "text/css";
+                    } else if (url.endsWith(".png")) {
+                        contentType = "image/png";
+                    } else if (url.endsWith(".ico")) {
+                        contentType = "image/x-icon";
+                    }
+
+                    body = HttpRequestUtils.readPath("./webapp", url);
+
+                    response200Header(dos, body.length, contentType);
                     responseBody(dos, body);
                     return;
                 }
