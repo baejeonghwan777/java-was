@@ -1,9 +1,9 @@
 package db;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.google.common.collect.Maps;
 
@@ -13,7 +13,7 @@ import model.User;
 public class DataBase {
     private static Map<String, User> users = Maps.newHashMap();
     private static Map<String, User> cookies= Maps.newHashMap();
-    private static List<Memo> memos = new ArrayList<>();
+    private static List<Memo> memos = new CopyOnWriteArrayList<>();
 
     public static void addUser(User user) {
         users.put(user.getUserId(), user);

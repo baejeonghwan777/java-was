@@ -338,7 +338,7 @@ public class RequestHandlerTest {
         String cookie = extractCookie(responseLogin);
 
         // when
-        String memoBody = "writer=%EB%B0%B0%EC%A0%95%ED%99%98&content=socket_test_success_happy"; // 한국어 디코딩
+        String memoBody = "writer=%EB%B0%B0%EC%A0%95%ED%99%98&content=배"; // 한국어 디코딩
         byte[] requestPostMemo = buildPostRequestWithCookie("/memo", cookie, memoBody);
         String responsePostMemo = runHandler(requestPostMemo);
 
@@ -350,7 +350,7 @@ public class RequestHandlerTest {
         assertAll(
                 () -> assertTrue(responsePostMemo.startsWith("HTTP/1.1 302 Found")),
                 () -> assertTrue(responseIndex.startsWith("HTTP/1.1 200 OK")),
-                () -> assertTrue(responseIndex.contains("socket_test_success_happy")),
+                () -> assertTrue(responseIndex.contains("배")),
                 () -> assertFalse(responseIndex.contains("${memoList}"))
         );
     }

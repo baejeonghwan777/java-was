@@ -11,7 +11,7 @@ public class Memo {
     public Memo(String writer, String content) {
         this.writer = writer;
         this.content = content;
-        this.date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        this.date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
     }
 
     public String getWriter() {

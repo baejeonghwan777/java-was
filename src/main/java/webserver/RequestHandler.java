@@ -10,10 +10,11 @@ import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import db.DataBase;
 import model.Memo;
@@ -97,7 +98,8 @@ public class RequestHandler extends Thread {
                     }
                     Map<String, String> params = parseQueryString(bodyData);
 
-                    String content = params.get("content");
+                    String content = URLDecoder.decode(params.get("content"), "UTF-8");
+
 
                     Memo memo = new Memo(loginUser.getName(), content);
                     DataBase.addMemo(memo);
@@ -114,7 +116,10 @@ public class RequestHandler extends Thread {
                     String htmlString = new String(fileBytes, StandardCharsets.UTF_8);
 
                     StringBuilder memoRows = new StringBuilder();
-                    for (Memo m : DataBase.findAllMemos()) {
+                    for (Memo m : DataBase.findAllMemos().stream()
+                            .sorted(Comparator.comparing(Memo::getDate, Comparator.reverseOrder())) // 변환 없이 문자열 역순 정렬
+                            .limit(5)
+                            .collect(Collectors.toList())) {
                         memoRows.append("<tr>")
                                 .append("<td>").append(m.getDate()).append("</td>")
                                 .append("<td>").append(m.getWriter()).append("</td>")
@@ -151,7 +156,7 @@ public class RequestHandler extends Thread {
                     builder.append("</table>");
                     builder.append("</body></html>");
 
-                    body = builder.toString().getBytes("UTF-8");
+                    body = builder.toString().getBytes(StandardCharsets.UTF_8);
                     response200Header(dos, body.length, "text/html;charset=utf-8"); // Content-Type이 text/html이어야 함
                     responseBody(dos, body);
                     return;
