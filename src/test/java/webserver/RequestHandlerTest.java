@@ -13,7 +13,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import db.DataBase;
-import model.User;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
