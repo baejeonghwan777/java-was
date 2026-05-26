@@ -28,8 +28,6 @@ public class MemoController implements Controller {
         }
 
         makeMemo(loginUser, bodyData);
-
-
         response.sendRedirect("/index.html");
     }
 
