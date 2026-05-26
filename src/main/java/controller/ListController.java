@@ -15,12 +15,17 @@ public class ListController implements Controller {
         String[] cookieInfo = request.getCookie().split("[:=]");
         User loginUser = DataBase.findUserByCookieId(cookieInfo[Cookie.COOKIE_VALUE_INDEX.getIndex()].trim());
 
-        int loginAfterFlag = checkCookie(request, loginUser);
+        int loginAfterFlag = checkCookie(loginUser);
         if(loginAfterFlag == Login.UNDEFINED.getFlag()) {
             response.sendRedirect("/user/login.html");
             return;
         }
 
+        StringBuilder builder = makeList();
+        response.build(url, builder.toString());
+    }
+
+    private StringBuilder makeList() {
         StringBuilder builder = new StringBuilder();
         builder.append("<html><body>");
         builder.append("<h1>사용자 목록</h1>");
@@ -37,11 +42,10 @@ public class ListController implements Controller {
 
         builder.append("</table>");
         builder.append("</body></html>");
-
-        response.build(url, builder.toString());
+        return builder;
     }
 
-    public int checkCookie(HttpRequest request, User loginUser) {
+    private int checkCookie(User loginUser) {
         if(loginUser != null)
             return Login.LOGIN_SUCCESS.getFlag();
         return Login.UNDEFINED.getFlag();

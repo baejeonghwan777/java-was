@@ -7,7 +7,6 @@ import webserver.HttpRequest;
 import webserver.HttpResponse;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 import java.util.stream.Collectors;
@@ -19,6 +18,13 @@ public class IndexController implements Controller {
         byte[] fileBytes = HttpRequestUtils.readPath("./webapp", "/index.html");
         String htmlString = new String(fileBytes, StandardCharsets.UTF_8);
 
+        StringBuilder memoRows = readMemo();
+        htmlString = htmlString.replace("${memoList}", memoRows.toString());
+
+        response.build(url, htmlString);
+    }
+
+    private StringBuilder readMemo() {
         StringBuilder memoRows = new StringBuilder();
         for (Memo m : DataBase.findAllMemos().stream()
                 .sorted(Comparator.comparing(Memo::getDate, Comparator.reverseOrder())) // 변환 없이 문자열 역순 정렬
@@ -30,9 +36,6 @@ public class IndexController implements Controller {
                     .append("<td>").append(m.getContent()).append("</td>")
                     .append("</tr>");
         }
-
-        htmlString = htmlString.replace("${memoList}", memoRows.toString());
-
-        response.build(url, htmlString);
+        return memoRows;
     }
 }

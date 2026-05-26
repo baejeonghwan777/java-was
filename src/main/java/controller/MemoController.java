@@ -21,21 +21,27 @@ public class MemoController implements Controller {
         User loginUser = DataBase.findUserByCookieId(cookieInfo[Cookie.COOKIE_VALUE_INDEX.getIndex()].trim());
         String bodyData = request.getBody();
 
-        int loginAfterFlag = checkCookie(request, loginUser);
+        int loginAfterFlag = checkCookie(loginUser);
         if(loginAfterFlag == Login.UNDEFINED.getFlag()) {
             response.sendRedirect("/user/login.html");
             return;
         }
 
+        makeMemo(loginUser, bodyData);
+
+
+        response.sendRedirect("/index.html");
+    }
+
+    private void makeMemo(User loginUser, String bodyData) throws UnsupportedEncodingException {
         Map<String, String> params = parseQueryString(bodyData);
         String content = URLDecoder.decode(params.get("content"), "UTF-8");
 
         Memo memo = new Memo(loginUser.getName(), content);
         DataBase.addMemo(memo);
-        response.sendRedirect("/index.html");
     }
 
-    public int checkCookie(HttpRequest request, User loginUser) {
+    private int checkCookie(User loginUser) {
         if(loginUser != null)
             return Login.LOGIN_SUCCESS.getFlag();
         return Login.UNDEFINED.getFlag();
