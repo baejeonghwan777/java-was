@@ -21,7 +21,12 @@ public class IndexController implements Controller {
         StringBuilder memoRows = readMemo();
         htmlString = htmlString.replace("${memoList}", memoRows.toString());
 
-        response.build(url, htmlString);
+        response.build(htmlString);
+    }
+
+    @Override
+    public boolean supports(HttpRequest request) {
+        return request.getPath().equals("/index.html") || request.getPath().equals("/");
     }
 
     private StringBuilder readMemo() {
@@ -31,11 +36,32 @@ public class IndexController implements Controller {
                 .limit(5)
                 .collect(Collectors.toList())) {
             memoRows.append("<tr>")
-                    .append("<td>").append(m.getDate()).append("</td>")
-                    .append("<td>").append(m.getWriter()).append("</td>")
-                    .append("<td>").append(m.getContent()).append("</td>")
+                    // escape 적용
+                    .append("<td>").append(escapeHtml(m.getDate())).append("</td>")
+                    .append("<td>").append(escapeHtml(m.getWriter())).append("</td>")
+                    .append("<td>").append(escapeHtml(m.getContent())).append("</td>")
                     .append("</tr>");
         }
         return memoRows;
+    }
+
+    private String escapeHtml(String input) {
+        if (input == null) {
+            return "";
+        }
+        StringBuilder builder = new StringBuilder(input.length() + 16);
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            switch (c) {
+                case '<':  builder.append("&lt;"); break;
+                case '>':  builder.append("&gt;"); break;
+                case '&':  builder.append("&amp;"); break;
+                case '"':  builder.append("&quot;"); break;
+                case '\'': builder.append("&#x27;"); break;
+                case '/':  builder.append("&#x2F;"); break;
+                default:   builder.append(c); break;
+            }
+        }
+        return builder.toString();
     }
 }

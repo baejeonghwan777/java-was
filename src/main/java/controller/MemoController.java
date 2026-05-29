@@ -31,6 +31,11 @@ public class MemoController implements Controller {
         response.sendRedirect("/index.html");
     }
 
+    @Override
+    public boolean supports(HttpRequest request) {
+        return request.getPath().equals("/memo");
+    }
+
     private void makeMemo(User loginUser, String bodyData) throws UnsupportedEncodingException {
         Map<String, String> params = parseQueryString(bodyData);
         String content = URLDecoder.decode(params.get("content"), "UTF-8");

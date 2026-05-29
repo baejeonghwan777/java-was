@@ -19,6 +19,11 @@ public class SignUpController implements Controller {
         response.sendRedirect("/index.html");
     }
 
+    @Override
+    public boolean supports(HttpRequest request) {
+        return request.getPath().equals("/user/create");
+    }
+
     private void makeUser(String data) throws UnsupportedEncodingException {
         Map<String, String> userInstance = parseQueryString(data);
 

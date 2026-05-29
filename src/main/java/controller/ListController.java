@@ -12,7 +12,15 @@ public class ListController implements Controller {
     @Override
     public void execute(HttpRequest request, HttpResponse response) {
         String url = request.getPath();
-        String[] cookieInfo = request.getCookie().split("[:=]");
+        String cookieHeader = request.getCookie();
+
+        // cookie 자체가 null일때 에러 방지
+        if (cookieHeader == null || cookieHeader.trim().isEmpty()) {
+            response.sendRedirect("/user/login.html");
+            return;
+        }
+
+        String[] cookieInfo = cookieHeader.split("[:=]");
         User loginUser = DataBase.findUserByCookieId(cookieInfo[Cookie.COOKIE_VALUE_INDEX.getIndex()].trim());
 
         int loginAfterFlag = checkCookie(loginUser);
@@ -22,7 +30,12 @@ public class ListController implements Controller {
         }
 
         StringBuilder builder = makeList();
-        response.build(url, builder.toString());
+        response.build(builder.toString());
+    }
+
+    @Override
+    public boolean supports(HttpRequest request) {
+        return request.getPath().equals("/user/list");
     }
 
     private StringBuilder makeList() {

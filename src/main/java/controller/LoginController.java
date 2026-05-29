@@ -27,6 +27,11 @@ public class LoginController implements Controller {
         response.sendRedirect("/index.html");
     }
 
+    @Override
+    public boolean supports(HttpRequest request) {
+        return request.getPath().equals("/user/login");
+    }
+
     private int checkUser(String data, HttpResponse response) throws UnsupportedEncodingException {
         Map<String, String> userInstance = parseQueryString(data);
 

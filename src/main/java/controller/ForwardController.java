@@ -9,4 +9,9 @@ public class ForwardController implements Controller {
         String url = request.getPath();
         response.forward(url);
     }
+
+    @Override
+    public boolean supports(HttpRequest request) {
+        return request.getMethod().equals("GET");
+    }
 }

@@ -9,41 +9,35 @@ import controller.MemoController;
 import controller.SignUpController;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 public class RequestMapper {
     private final HttpRequest httpRequest;
     private final HttpResponse httpResponse;
-    private Controller controller = new ForwardController();
 
     public RequestMapper(HttpRequest httpRequest, HttpResponse httpResponse) {
         this.httpRequest = httpRequest;
         this.httpResponse = httpResponse;
     }
 
+    private final List<Controller> controllers = Arrays.asList(
+            new IndexController(),
+            new SignUpController(),
+            new LoginController(),
+            new MemoController(),
+            new ListController(),
+            new ForwardController()
+    );
+
     public void proceed() throws IOException {
-        if (httpRequest.getMethod().equals("GET") && httpRequest.getPath().endsWith(".html")) {
-            controller = new ForwardController();
-        }
+        Controller targetController = controllers.stream()
+                .filter(controller -> controller.supports(httpRequest))
+                .findFirst()
+                .orElse(null);
 
-        if (httpRequest.getPath().equals("/index.html") || httpRequest.getPath().equals("/")) {
-            controller = new IndexController();
+        if (targetController != null) {
+            targetController.execute(httpRequest, httpResponse);
         }
-
-        if (httpRequest.getPath().equals("/user/create")) {
-            controller = new SignUpController();
-        }
-
-        if (httpRequest.getPath().equals("/user/login")) {
-            controller = new LoginController();
-        }
-
-        if (httpRequest.getPath().equals("/memo")) {
-            controller = new MemoController();
-        }
-
-        if (httpRequest.getPath().equals("/user/list")) {
-            controller = new ListController();
-        }
-        controller.execute(httpRequest, httpResponse);
     }
 }

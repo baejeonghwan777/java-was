@@ -41,7 +41,7 @@ public class HttpResponse {
         }
     }
 
-    public void build(String url, String builder) {
+    public void build(String builder) {
         byte[] body = builder.getBytes(StandardCharsets.UTF_8);
         response200Header(body.length, "text/html;charset=utf-8");
         responseBody(body);
