@@ -11,7 +11,6 @@ public class ListController implements Controller {
 
     @Override
     public void execute(HttpRequest request, HttpResponse response) {
-        String url = request.getPath();
         String cookieHeader = request.getCookie();
 
         // cookie 자체가 null일때 에러 방지

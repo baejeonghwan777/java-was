@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 public class IndexController implements Controller {
     @Override
     public void execute(HttpRequest request, HttpResponse response) throws IOException {
-        String url = request.getPath();
         byte[] fileBytes = HttpRequestUtils.readPath("./webapp", "/index.html");
         String htmlString = new String(fileBytes, StandardCharsets.UTF_8);
 

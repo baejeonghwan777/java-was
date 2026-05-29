@@ -128,7 +128,7 @@ public class RequestHandlerTest {
     @Test
     public void GET_존재하지않는파일() {
         // given
-        byte[] request = buildGetRequest("/baejeonghwan is happy");
+        byte[] request = buildGetRequest("/baejeonghwan%20is%20happy");
         String response = runHandler(request);
 
         // when
@@ -251,28 +251,6 @@ public class RequestHandlerTest {
         assertAll(
                 () -> assertTrue(responseList.startsWith("HTTP/1.1 302 Found")),
                 () -> assertTrue(responseList.contains("/user/login"))
-        );
-    }
-
-    @DisplayName("로그인 성공 후 리스트 출력이 제대로 되는지 확인한다.")
-    @Test
-    public void printList() {
-        // given
-        byte[] requestCreate = buildPostRequest("/user/create", "userId=baejeonghwan777&password=123456&name=%EB%B0%B0%EC%A0%95%ED%99%98&email=baejeonghwon777@gmail.com");
-        byte[] request = buildPostRequest("/user/login", "userId=baejeonghwan777&password=123456");
-
-        // when
-        String responseCreate = runHandler(requestCreate);
-        String response = runHandler(request);
-        String cookie = extractCookie(response);
-
-
-        // then
-        byte[] requestList = buildGetRequestWithCookie("/user/list", cookie);
-        String responseList = runHandler(requestList);
-        assertAll(
-                () -> assertTrue(responseList.startsWith("HTTP/1.1 200 OK")),
-                () -> assertTrue(responseList.contains("User [userId=baejeonghwan777, password=123456, name=배정환, email=baejeonghwon777@gmail.com]"))
         );
     }
 

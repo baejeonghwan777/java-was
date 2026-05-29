@@ -31,7 +31,7 @@ public class HttpRequest {
             throw new IllegalArgumentException("Invalid HTTP Request: Request line is empty");
         }
 
-        String[] firstLine = line.split(" ");
+        String[] firstLine = line.split(" ", 3);
         if (firstLine.length == PathIndex.MAX_INDEX.getIndex()) {
             request.method = firstLine[PathIndex.METHOD_INDEX.getIndex()];
             String rawUrl = firstLine[PathIndex.URL_INDEX.getIndex()];
