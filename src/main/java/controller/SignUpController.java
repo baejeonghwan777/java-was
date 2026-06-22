@@ -11,16 +11,16 @@ import java.util.Map;
 
 import static util.HttpRequestUtils.parseQueryString;
 
-public class SignUpController implements Controller {
+public class SignUpController extends AbstractController {
     @Override
-    public void execute(HttpRequest request, HttpResponse response) throws UnsupportedEncodingException {
+    public void doPost(HttpRequest request, HttpResponse response) throws UnsupportedEncodingException {
         String userdata = request.getBody();
         makeUser(userdata);
         response.sendRedirect("/index.html");
     }
 
     @Override
-    public boolean supports(HttpRequest request) {
+    public boolean service(HttpRequest request) {
         return request.getPath().equals("/user/create");
     }
 

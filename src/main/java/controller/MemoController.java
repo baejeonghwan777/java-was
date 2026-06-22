@@ -14,9 +14,17 @@ import java.util.Map;
 
 import static util.HttpRequestUtils.parseQueryString;
 
-public class MemoController implements Controller {
+public class MemoController extends AbstractController {
     @Override
-    public void execute(HttpRequest request, HttpResponse response) throws UnsupportedEncodingException {
+    public void doPost(HttpRequest request, HttpResponse response) throws UnsupportedEncodingException {
+        String cookieHeader = request.getCookie();
+
+        // cookie 자체가 null일때 에러 방지
+        if (cookieHeader == null || cookieHeader.trim().isEmpty()) {
+            response.sendRedirect("/user/login.html");
+            return;
+        }
+
         String[] cookieInfo = request.getCookie().split("[:=]");
         User loginUser = DataBase.findUserByCookieId(cookieInfo[Cookie.COOKIE_VALUE_INDEX.getIndex()].trim());
         String bodyData = request.getBody();
@@ -32,7 +40,7 @@ public class MemoController implements Controller {
     }
 
     @Override
-    public boolean supports(HttpRequest request) {
+    public boolean service(HttpRequest request) {
         return request.getPath().equals("/memo");
     }
 

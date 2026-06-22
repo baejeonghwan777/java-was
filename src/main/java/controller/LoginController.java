@@ -13,11 +13,11 @@ import java.util.UUID;
 
 import static util.HttpRequestUtils.parseQueryString;
 
-public class LoginController implements Controller {
+public class LoginController extends AbstractController {
     int loginBeforeFlag = Login.UNDEFINED.getFlag();
 
     @Override
-    public void execute(HttpRequest request, HttpResponse response) throws UnsupportedEncodingException {
+    public void doPost(HttpRequest request, HttpResponse response) throws UnsupportedEncodingException {
         String userdata = request.getBody();
         loginBeforeFlag = checkUser(userdata, response);
         if(loginBeforeFlag == Login.LOGIN_FAIL.getFlag()) {
@@ -28,7 +28,7 @@ public class LoginController implements Controller {
     }
 
     @Override
-    public boolean supports(HttpRequest request) {
+    public boolean service(HttpRequest request) {
         return request.getPath().equals("/user/login");
     }
 

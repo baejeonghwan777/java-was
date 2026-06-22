@@ -7,10 +7,10 @@ import model.User;
 import webserver.HttpRequest;
 import webserver.HttpResponse;
 
-public class ListController implements Controller {
+public class ListController extends AbstractController {
 
     @Override
-    public void execute(HttpRequest request, HttpResponse response) {
+    public void doGet(HttpRequest request, HttpResponse response) {
         String cookieHeader = request.getCookie();
 
         // cookie 자체가 null일때 에러 방지
@@ -33,7 +33,7 @@ public class ListController implements Controller {
     }
 
     @Override
-    public boolean supports(HttpRequest request) {
+    public boolean service(HttpRequest request) {
         return request.getPath().equals("/user/list");
     }
 

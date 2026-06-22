@@ -11,9 +11,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
-public class IndexController implements Controller {
+public class IndexController extends AbstractController {
     @Override
-    public void execute(HttpRequest request, HttpResponse response) throws IOException {
+    public void doGet(HttpRequest request, HttpResponse response) throws IOException {
         byte[] fileBytes = HttpRequestUtils.readPath("./webapp", "/index.html");
         String htmlString = new String(fileBytes, StandardCharsets.UTF_8);
 
@@ -24,7 +24,7 @@ public class IndexController implements Controller {
     }
 
     @Override
-    public boolean supports(HttpRequest request) {
+    public boolean service(HttpRequest request) {
         return request.getPath().equals("/index.html") || request.getPath().equals("/");
     }
 
