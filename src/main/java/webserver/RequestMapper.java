@@ -9,7 +9,6 @@ public class RequestMapper {
     private final HttpRequest httpRequest;
     private final HttpResponse httpResponse;
 
-    // static을 제거하고 일반 인스턴스 변수로 선언
     private final Map<String, Controller> controllers = new HashMap<>();
 
     public RequestMapper(HttpRequest httpRequest, HttpResponse httpResponse) {
